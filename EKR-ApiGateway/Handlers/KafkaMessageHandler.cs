@@ -1,13 +1,19 @@
-﻿using EKR_Shared.Handlers;
+﻿using Confluent.Kafka;
+using EKR_ApiGateway.Controllers;
+using EKR_Shared.Handlers;
 using Serilog;
 
 namespace EKR_ApiGateway.Handlers
 {
-    public class KafkaMessageHandler : IKafkaMessageHandler
+    public class KafkaMessageHandler : IKafkaMessageHandler<string, string>
     {
-        public async Task HandleAsync(string message, CancellationToken ct)
+        public async Task HandleAsync(Message<string, string> message, CancellationToken ct)
         {
-            Log.Information(message);
+            Log.Information("Received: {@Message}", message);
+            if (AuthController.pending.Remove(message.Key, out var tcs))
+            {
+                tcs.SetResult(message.Value);
+            }
         }
     }
 }

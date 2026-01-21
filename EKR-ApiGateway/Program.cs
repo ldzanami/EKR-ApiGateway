@@ -59,7 +59,7 @@ namespace EKR_ApiGateway
                 builder.Services.AddAuthorization();
                 builder.Services.AddHostedService<KafkaConsumerService>();
                 builder.Services.AddScoped<IKafkaProducerService, KafkaProducerService>();
-                builder.Services.AddScoped<IKafkaMessageHandler, KafkaMessageHandler>();
+                builder.Services.AddScoped<IKafkaMessageHandler<string, string>, KafkaMessageHandler>();
 
                 var app = builder.Build();
 
