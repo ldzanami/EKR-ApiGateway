@@ -1,6 +1,6 @@
 ﻿using Confluent.Kafka;
 using EKR_ApiGateway.Controllers;
-using EKR_Shared.Handlers;
+using EKR_Shared.Handlers.Interfaces;
 using Serilog;
 
 namespace EKR_ApiGateway.Handlers

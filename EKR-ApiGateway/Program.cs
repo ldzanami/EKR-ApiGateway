@@ -1,5 +1,5 @@
 using EKR_ApiGateway.Handlers;
-using EKR_Shared.Handlers;
+using EKR_Shared.Handlers.Interfaces;
 using EKR_Shared.Middlewares;
 using EKR_Shared.Services.Infrastructure;
 using EKR_Shared.Services.Interfaces.Infrastructure;
