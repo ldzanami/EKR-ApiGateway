@@ -68,6 +68,16 @@ namespace EKR_ApiGateway.Controllers
             return await Route(dto);
         }
 
+        [HttpGet("get-public-key")]
+        public async Task<IActionResult> GetPublicKey([FromQuery] Guid requestId)
+        {
+            return await Route(new GeneralPackageTemplate
+            {
+                RequestId = requestId,
+                Type = AuthCommands.GetPublicKey
+            });
+        }
+
         private async Task<IActionResult> Route(GeneralPackageTemplate dto)
         {
             try
