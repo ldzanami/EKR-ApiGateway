@@ -7,7 +7,7 @@ using System.Text.Json;
 namespace EKR_ApiGateway.Controllers
 {
     [ApiController]
-    [Route("api/[controller]")]
+    [Route("api/auth")]
     public class AuthController(IKafkaProducerService kafkaProducerService) : ControllerBase
     {
         public static readonly Dictionary<string, TaskCompletionSource<string>> pending = [];
