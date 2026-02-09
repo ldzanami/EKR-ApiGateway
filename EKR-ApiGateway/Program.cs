@@ -29,6 +29,16 @@ namespace EKR_ApiGateway
                 Log.Information("Starting web application");
                 var builder = WebApplication.CreateBuilder(args);
 
+                builder.Services.AddCors(options =>
+                {
+                    options.AddPolicy("AllowFrontend", policy =>
+                    {
+                        policy.AllowAnyOrigin()
+                              .AllowAnyHeader()
+                              .AllowAnyMethod();
+                    });
+                });
+
                 builder.Services.AddControllers();
 
                 builder.Logging.ClearProviders();
@@ -62,6 +72,9 @@ namespace EKR_ApiGateway
                 builder.Services.AddScoped<IKafkaMessageHandler<string, string>, KafkaMessageHandler>();
 
                 var app = builder.Build();
+
+                app.UseCors("AllowFrontend");
+
 
                 app.UseMiddleware<ExceptionHandlingMiddleware>();
                 app.UseAuthentication();
