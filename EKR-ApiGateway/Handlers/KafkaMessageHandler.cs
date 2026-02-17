@@ -9,7 +9,7 @@ namespace EKR_ApiGateway.Handlers
     {
         public async Task HandleAsync(Message<string, string> message, CancellationToken ct)
         {
-            Log.Information("Received: {@Message}", message);
+            Log.Information("*ОТПРАВЛЕН ОТВЕТ КЛИЕТНУ*: Key={@Key}, Message={@Message}", message.Key, message.Value);
             if (AuthController.pending.Remove(message.Key, out var tcs))
             {
                 tcs.SetResult(message.Value);
