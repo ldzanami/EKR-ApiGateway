@@ -12,19 +12,19 @@ EXPOSE 8081
 FROM mcr.microsoft.com/dotnet/sdk:10.0 AS build
 ARG BUILD_CONFIGURATION=Release
 WORKDIR /src
-COPY ["EKR_ApiGateway/EKR_ApiGateway.csproj", "EKR_ApiGateway/"]
-RUN dotnet restore "./EKR_ApiGateway/EKR_ApiGateway.csproj"
+COPY ["EKR-ApiGateway/EKR-ApiGateway.csproj", "EKR-ApiGateway/"]
+RUN dotnet restore "./EKR-ApiGateway/EKR-ApiGateway.csproj"
 COPY . .
-WORKDIR "/src/EKR_ApiGateway"
-RUN dotnet build "./EKR_ApiGateway.csproj" -c $BUILD_CONFIGURATION -o /app/build
+WORKDIR "/src/EKR-ApiGateway"
+RUN dotnet build "./EKR-ApiGateway.csproj" -c $BUILD_CONFIGURATION -o /app/build
 
 # Этот этап используется для публикации проекта службы, который будет скопирован на последний этап
 FROM build AS publish
 ARG BUILD_CONFIGURATION=Release
-RUN dotnet publish "./EKR_ApiGateway.csproj" -c $BUILD_CONFIGURATION -o /app/publish /p:UseAppHost=false
+RUN dotnet publish "./EKR-ApiGateway.csproj" -c $BUILD_CONFIGURATION -o /app/publish /p:UseAppHost=false
 
 # Этот этап используется в рабочей среде или при запуске из VS в обычном режиме (по умолчанию, когда конфигурация отладки не используется)
 FROM base AS final
 WORKDIR /app
 COPY --from=publish /app/publish .
-ENTRYPOINT ["dotnet", "EKR_ApiGateway.dll"]
+ENTRYPOINT ["dotnet", "EKR-ApiGateway.dll"]

@@ -1,6 +1,7 @@
 ﻿using EKR_Shared;
 using EKR_Shared.Data;
 using EKR_Shared.Services.Interfaces.Infrastructure;
+using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using System.Text.Json;
 
@@ -8,10 +9,12 @@ namespace EKR_ApiGateway.Controllers
 {
     [ApiController]
     [Route("api/auth")]
-    public class AuthController(IKafkaProducerService kafkaProducerService) : ControllerBase
+    public class AuthController(IKafkaProducerService kafkaProducerService, IConfiguration configuration) : ControllerBase
     {
         public static readonly Dictionary<string, TaskCompletionSource<string>> pending = [];
+        public readonly IConfiguration _configuration = configuration;
         private readonly IKafkaProducerService _kafkaProducerService = kafkaProducerService;
+
         [HttpPost("register")]
         public async Task<IActionResult> Register([FromBody] GeneralPackageTemplate dto)
         {
@@ -36,6 +39,7 @@ namespace EKR_ApiGateway.Controllers
             return await Route(dto);
         }
 
+        [Authorize]
         [HttpPost("revoke")]
         public async Task<IActionResult> RevokeSession([FromBody] GeneralPackageTemplate dto)
         {
@@ -44,6 +48,7 @@ namespace EKR_ApiGateway.Controllers
             return await Route(dto);
         }
 
+        [Authorize]
         [HttpPost("revoke-all")]
         public async Task<IActionResult> RevokeAllSessions([FromBody] GeneralPackageTemplate dto)
         {
@@ -52,6 +57,7 @@ namespace EKR_ApiGateway.Controllers
             return await Route(dto);
         }
 
+        [Authorize]
         [HttpPost("revoke-others")]
         public async Task<IActionResult> RevokeOtherSessions([FromBody] GeneralPackageTemplate dto)
         {
@@ -60,6 +66,7 @@ namespace EKR_ApiGateway.Controllers
             return await Route(dto);
         }
 
+        [Authorize]
         [HttpPost("get-active")]
         public async Task<IActionResult> GetActiveSessions([FromBody] GeneralPackageTemplate dto)
         {
@@ -67,6 +74,7 @@ namespace EKR_ApiGateway.Controllers
                 return BadRequest("Wrong command type");
             return await Route(dto);
         }
+
 
         [HttpGet("get-public-key")]
         public async Task<IActionResult> GetPublicKey([FromQuery] Guid requestId)
@@ -82,7 +90,7 @@ namespace EKR_ApiGateway.Controllers
         {
             try
             {
-                await _kafkaProducerService.GiveAnswerAsync(JsonSerializer.Serialize(dto), partition: dto.RequestId.ToString(), topic: "auth-requests");
+                await _kafkaProducerService.GiveAnswerAsync(JsonSerializer.Serialize(dto), partition: dto.RequestId.ToString(), topic: _configuration["ProducerTopicName"]!);
                 var tcs = new TaskCompletionSource<string>();
                 pending[dto.RequestId.ToString()] = tcs;
                 var response = await tcs.Task.WaitAsync(TimeSpan.FromSeconds(10));

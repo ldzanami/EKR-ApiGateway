@@ -29,6 +29,18 @@ namespace EKR_ApiGateway
                 Log.Information("Starting web application");
                 var builder = WebApplication.CreateBuilder(args);
 
+                builder.Configuration["Kafka:Address"] = Environment.GetEnvironmentVariable("KAFKA_ADDRESS") ?? builder.Configuration["Kafka:Address"];
+                builder.Configuration["Kafka:GroupId"] = Environment.GetEnvironmentVariable("KAFKA_GROUP_ID") ?? builder.Configuration["Kafka:GroupId"];
+                builder.Configuration["Kafka:ConsumerTopicName"] = Environment.GetEnvironmentVariable("KAFKA_CONSUMER_TOPIC_NAME") ?? builder.Configuration["Kafka:ConsumerTopicName"];
+                builder.Configuration["Kafka:ProducerTopicName"] = Environment.GetEnvironmentVariable("KAFKA_PRODUCER_TOPIC_NAME") ?? builder.Configuration["Kafka:ProducerTopicName"];
+                builder.Configuration["Kafka:Timeout"] = Environment.GetEnvironmentVariable("KAFKA_TIMEOUT") ?? builder.Configuration["Kafka:Timeout"];
+                builder.Configuration["Jwt:Issuer"] = Environment.GetEnvironmentVariable("JWT_ISSUER") ?? builder.Configuration["Jwt:Issuer"];
+                builder.Configuration["Jwt:Audience"] = Environment.GetEnvironmentVariable("JWT_AUDIENCE") ?? builder.Configuration["Jwt:Audience"];
+                builder.Configuration["Jwt:Key"] = Environment.GetEnvironmentVariable("JWT_KEY") ?? builder.Configuration["Jwt:Key"];
+                builder.Configuration["Jwt:AccessTokenLifetimeMinutes"] = Environment.GetEnvironmentVariable("JWT_ACCESS_TOKEN_LIFETIME") ?? builder.Configuration["Jwt:AccessTokenLifetimeMinutes"];
+                builder.Configuration["Jwt:RefreshTokenLifetimeDays"] = Environment.GetEnvironmentVariable("JWT_REFRESH_TOKEN_LIFETIME") ?? builder.Configuration["Jwt:RefreshTokenLifetimeDays"];
+                builder.Configuration["AllowedHosts"] = Environment.GetEnvironmentVariable("ALLOWED_HOSTS") ?? builder.Configuration["AllowedHosts"];
+
                 builder.Services.AddCors(options =>
                 {
                     options.AddPolicy("AllowFrontend", policy =>
