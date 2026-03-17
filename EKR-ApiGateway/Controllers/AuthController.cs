@@ -20,7 +20,7 @@ namespace EKR_ApiGateway.Controllers
         {
             if (dto.Type != AuthCommands.Register)
                 return BadRequest("Wrong command type");
-            return await Route(dto);
+            return await Route(dto, _configuration["Kafka:AuthTopicName"]!);
         }
 
         [HttpPost("auth")]
@@ -28,7 +28,7 @@ namespace EKR_ApiGateway.Controllers
         {
             if (dto.Type != AuthCommands.Authorize)
                 return BadRequest("Wrong command type");
-            return await Route(dto);
+            return await Route(dto, _configuration["Kafka:AuthTopicName"]!);
         }
 
         [HttpPost("refresh")]
@@ -36,7 +36,7 @@ namespace EKR_ApiGateway.Controllers
         {
             if (dto.Type != AuthCommands.Refresh)
                 return BadRequest("Wrong command type");
-            return await Route(dto);
+            return await Route(dto, _configuration["Kafka:AuthTopicName"]!);
         }
 
         [Authorize]
@@ -45,7 +45,7 @@ namespace EKR_ApiGateway.Controllers
         {
             if (dto.Type != AuthCommands.Revoke)
                 return BadRequest("Wrong command type");
-            return await Route(dto);
+            return await Route(dto, _configuration["Kafka:AuthTopicName"]!);
         }
 
         [Authorize]
@@ -54,7 +54,7 @@ namespace EKR_ApiGateway.Controllers
         {
             if (dto.Type != AuthCommands.RevokeAll)
                 return BadRequest("Wrong command type");
-            return await Route(dto);
+            return await Route(dto, _configuration["Kafka:AuthTopicName"]!);
         }
 
         [Authorize]
@@ -63,7 +63,7 @@ namespace EKR_ApiGateway.Controllers
         {
             if (dto.Type != AuthCommands.RevokeOthers)
                 return BadRequest("Wrong command type");
-            return await Route(dto);
+            return await Route(dto, _configuration["Kafka:AuthTopicName"]!);
         }
 
         [Authorize]
@@ -72,7 +72,7 @@ namespace EKR_ApiGateway.Controllers
         {
             if (dto.Type != AuthCommands.GetActive)
                 return BadRequest("Wrong command type");
-            return await Route(dto);
+            return await Route(dto, _configuration["Kafka:AuthTopicName"]!);
         }
 
 
@@ -83,19 +83,28 @@ namespace EKR_ApiGateway.Controllers
             {
                 RequestId = requestId,
                 Type = AuthCommands.GetPublicKey
-            });
+            }, _configuration["Kafka:AuthTopicName"]!);
         }
 
-        private async Task<IActionResult> Route(GeneralPackageTemplate dto)
+        [HttpGet("get-self-id")]
+        public async Task<IActionResult> GetSelfId() => Ok(_configuration["SelfId"]);
+
+
+        private async Task<IActionResult> Route(GeneralPackageTemplate dto, string topic)
         {
+            var cst = new CancellationTokenSource(TimeSpan.FromSeconds(10)).Token;
             try
             {
-                await _kafkaProducerService.GiveAnswerAsync(JsonSerializer.Serialize(dto), partition: dto.RequestId.ToString(), topic: _configuration["ProducerTopicName"]!);
+                await _kafkaProducerService.GiveAnswerAsync(JsonSerializer.Serialize(dto), partition: dto.RequestId.ToString(), topic: topic);
                 var tcs = new TaskCompletionSource<string>();
                 pending[dto.RequestId.ToString()] = tcs;
-                var response = await tcs.Task.WaitAsync(TimeSpan.FromSeconds(10));
+                var response = await tcs.Task.WaitAsync(cst);
 
                 return Ok(response);
+            }
+            catch (OperationCanceledException ex) when (ex.CancellationToken == cst)
+            {
+                return BadRequest("Time out");
             }
             catch (Exception ex)
             {
