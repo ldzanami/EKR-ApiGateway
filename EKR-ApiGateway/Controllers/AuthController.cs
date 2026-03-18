@@ -3,12 +3,14 @@ using EKR_Shared.Data;
 using EKR_Shared.Services.Interfaces.Infrastructure;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
+using Microsoft.AspNetCore.RateLimiting;
 using System.Text.Json;
 
 namespace EKR_ApiGateway.Controllers
 {
     [ApiController]
     [Route("api/auth")]
+    [EnableRateLimiting("fixed")]
     public class AuthController(IKafkaProducerService kafkaProducerService, IConfiguration configuration) : ControllerBase
     {
         public static readonly Dictionary<string, TaskCompletionSource<string>> pending = [];

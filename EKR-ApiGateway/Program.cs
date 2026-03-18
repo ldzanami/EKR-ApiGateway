@@ -4,9 +4,11 @@ using EKR_Shared.Middlewares;
 using EKR_Shared.Services.Infrastructure;
 using EKR_Shared.Services.Interfaces.Infrastructure;
 using Microsoft.AspNetCore.Authentication.JwtBearer;
+using Microsoft.AspNetCore.RateLimiting;
 using Microsoft.IdentityModel.Tokens;
 using Serilog;
 using System.Text;
+using System.Threading.RateLimiting;
 
 namespace EKR_ApiGateway
 {
@@ -79,25 +81,42 @@ namespace EKR_ApiGateway
                                     };
                                 });
 
+                builder.Services.AddRateLimiter(options =>
+                {
+                    options.RejectionStatusCode = StatusCodes.Status429TooManyRequests;
+
+                    options.AddPolicy("fixed", context =>
+                        RateLimitPartition.GetFixedWindowLimiter(
+                            context.Connection.RemoteIpAddress?.ToString() ?? "unknown",
+                            _ => new FixedWindowRateLimiterOptions
+                            {
+                                PermitLimit = 10,
+                                Window = TimeSpan.FromSeconds(10)
+                            }));
+                });
+
+
                 builder.Services.AddAuthorization();
                 builder.Services.AddHostedService<KafkaConsumerService>();
                 builder.Services.AddScoped<IKafkaProducerService, KafkaProducerService>();
                 builder.Services.AddScoped<IKafkaMessageHandler<string, string>, KafkaMessageHandler>();
 
                 var app = builder.Build();
+                app.UseMiddleware<ExceptionHandlingMiddleware>();
+                app.UseSwagger();
+                app.UseSwaggerUI();
+                app.UseHttpsRedirection();
+
+                app.UseRouting();
 
                 app.UseCors("AllowFrontend");
 
+                app.UseRateLimiter();
 
-                app.UseMiddleware<ExceptionHandlingMiddleware>();
                 app.UseAuthentication();
                 app.UseAuthorization();
-                app.UseSwagger();
-                app.UseSwaggerUI();
 
                 app.MapControllers();
-                app.UseHttpsRedirection();
-                app.UseRouting();
 
                 app.Run();
 
