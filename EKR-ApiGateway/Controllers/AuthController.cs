@@ -91,6 +91,14 @@ namespace EKR_ApiGateway.Controllers
         [HttpGet("get-self-id")]
         public async Task<IActionResult> GetSelfId() => Ok(_configuration["SelfId"]);
 
+        [HttpPost("keys-rotation")]
+        public async Task<IActionResult> KeysRotation([FromBody] GeneralPackageTemplate dto)
+        {
+            if (dto.Type != AuthCommands.KeysRotation)
+                return BadRequest("Wrong command type");
+            return await Route(dto, _configuration["Kafka:AuthTopicName"]!);
+        }
+
 
         private async Task<IActionResult> Route(GeneralPackageTemplate dto, string topic)
         {
