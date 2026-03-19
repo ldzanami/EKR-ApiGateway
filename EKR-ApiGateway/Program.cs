@@ -90,8 +90,8 @@ namespace EKR_ApiGateway
                             context.Connection.RemoteIpAddress?.ToString() ?? "unknown",
                             _ => new FixedWindowRateLimiterOptions
                             {
-                                PermitLimit = 10,
-                                Window = TimeSpan.FromSeconds(10)
+                                PermitLimit = 15,
+                                Window = TimeSpan.FromSeconds(5)
                             }));
                 });
 
