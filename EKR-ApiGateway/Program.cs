@@ -4,9 +4,9 @@ using EKR_Shared.Middlewares;
 using EKR_Shared.Services.Infrastructure;
 using EKR_Shared.Services.Interfaces.Infrastructure;
 using Microsoft.AspNetCore.Authentication.JwtBearer;
-using Microsoft.AspNetCore.RateLimiting;
 using Microsoft.IdentityModel.Tokens;
 using Serilog;
+using StackExchange.Redis;
 using System.Text;
 using System.Threading.RateLimiting;
 
@@ -42,7 +42,9 @@ namespace EKR_ApiGateway
                 builder.Configuration["Jwt:AccessTokenLifetimeMinutes"] = Environment.GetEnvironmentVariable("JWT_ACCESS_TOKEN_LIFETIME") ?? builder.Configuration["Jwt:AccessTokenLifetimeMinutes"];
                 builder.Configuration["Jwt:RefreshTokenLifetimeDays"] = Environment.GetEnvironmentVariable("JWT_REFRESH_TOKEN_LIFETIME") ?? builder.Configuration["Jwt:RefreshTokenLifetimeDays"];
                 builder.Configuration["AllowedHosts"] = Environment.GetEnvironmentVariable("ALLOWED_HOSTS") ?? builder.Configuration["AllowedHosts"];
-                builder.Configuration["SelfId"] = Guid.NewGuid().ToString();
+                builder.Configuration["SelfId"] = Environment.GetEnvironmentVariable("SELF_ID") ?? builder.Configuration["SelfId"];
+                builder.Configuration["Kafka:GroupId"] = Environment.GetEnvironmentVariable("KAFKA_GROUP_ID") ?? builder.Configuration["Kafka:GroupId"];
+                builder.Configuration["RedisConnection"] = Environment.GetEnvironmentVariable("REDIS_CONNECTION") ?? builder.Configuration["RedisConnection"];
 
                 builder.Services.AddCors(options =>
                 {
@@ -80,6 +82,8 @@ namespace EKR_ApiGateway
                                         IssuerSigningKey = new SymmetricSecurityKey(Encoding.UTF8.GetBytes(builder.Configuration["Jwt:Key"]!))
                                     };
                                 });
+
+                builder.Services.AddSingleton <IConnectionMultiplexer>(sp => ConnectionMultiplexer.Connect(builder.Configuration["RedisConnection"]!));
 
                 builder.Services.AddRateLimiter(options =>
                 {

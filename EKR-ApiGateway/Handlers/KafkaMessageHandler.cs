@@ -1,19 +1,32 @@
 ﻿using Confluent.Kafka;
-using EKR_ApiGateway.Controllers;
 using EKR_Shared.Handlers.Interfaces;
 using Serilog;
+using StackExchange.Redis;
+using System.Text;
 
 namespace EKR_ApiGateway.Handlers
 {
-    public class KafkaMessageHandler : IKafkaMessageHandler<string, string>
+    public class KafkaMessageHandler(IConnectionMultiplexer redis) : IKafkaMessageHandler<string, string>
     {
-        public async Task HandleAsync(Message<string, string> message, CancellationToken ct)
+        private readonly ISubscriber _sub = redis.GetSubscriber();
+
+        public async Task<bool> HandleAsync(Message<string, string> message, CancellationToken ct)
         {
-            Log.Information("*ОТПРАВЛЕН ОТВЕТ КЛИЕТНУ*: Key={@Key}, Message={@Message}", message.Key, message.Value);
-            if (AuthController.pending.Remove(message.Key, out var tcs))
-            {
-                tcs.SetResult(message.Value);
-            }
+            Log.Information("ОБРАБОТКА ОТВЕТА ОТ СЕРВИСА");
+
+            var requestId = Encoding.UTF8.GetString(message.Headers.GetLastBytes("request-id"));
+
+            Log.Information("ПУБЛИКАЦИЯ ОТВЕТА ОТ СЕРВИСА В REDIS");
+
+            await _sub.PublishAsync
+                  (
+                      $"response:{requestId}",
+                      message.Value
+                  );
+
+            Log.Information("ПУБЛИКАЦИЯ ОТВЕТА ОТ СЕРВИСА В REDIS ПРОШЛА УСПЕШНО");
+
+            return true;
         }
     }
 }
